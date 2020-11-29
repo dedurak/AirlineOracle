@@ -9,7 +9,7 @@ export class MyContracts {
         " event newFlightIssued(string _from, string _to, uint _status)"
     ];
 
-    flightToken_ADDR = "0xFc46539eb3394870d363Cb65BBE5478710F4f021 ";
+    flightToken_ADDR = "0xFc46539eb3394870d363Cb65BBE5478710F4f021";
     flightToken_ABI = [
         // functions
         "function totalSupply() public view returns(uint256)",

@@ -7,24 +7,35 @@ The App uses the web3-API "ethers.js" (https://docs.ethers.io/). This API provid
 
 
 
-## Login
+## Download/Install
+
+At the moment the prototype is in development. After launch to production you can download the app from the appropriate app stores.
+If you are intereseted, please don't hesitate to download the code by typing following command in your command line:
+
+`git clone https://github.com/dedurak/Airline_Oracle`
+
+
+
+## Instructions
+
+### Login
 
 Login is possible with the individual BIP39 Mnemonic.
 
 
-## Create new Flight
+### Create new Flight
 
 To create a new Flight the user needs to fill out the form and sends the data to the contract ["OperationsPlan"](https://github.com/dedurak/smartcontracts/blob/main/smart_contracts/contracts/OperationPlan.sol) by pressing on "Create Flight". 
 The airline defines on which weekdays the flight will be operated and can set the ticketprice for each operating day.
 
 
-## Create new Inventory
+### Create new Inventory
 
 First of all the airline searches for the flight for which the inventory shall be created. The necessary data for the inventory is the aircraft type, the registration of it and how many seats are available. This information is important to ensure that no overbooking of a planned flight can happen. 
 There are many cases where passengers were rebooked to another flight because of overbooking. Now this case is eliminated and not more possible.
 
 
-## Update Flight Status
+### Update Flight Status
 
 The user has the options to search for all planned flights by entering the date. After all flights are found, the details will be displayed on a the following screen. 
 To change the state of a flight, the user first presses on the appropriate box to get displayed the state dialog, where the new state can be selected from a dropdown menu. 
@@ -35,8 +46,6 @@ Before a passenger can check-in for a flight, the airline should consider that t
 This app aims to demonstrate and visualize the fundamental steps of a new revolutionary process how refundings, following on a flight cancellation, or compensation payments, according to the european fligth passenger regulations (EU 261/2004), can be fully automatized without any necessary execution from employee-side.
 
 
-## Token Portal
+### Token Portal
 
 This portal shows the current balance of FLY-Tokens. There is also a table where all details to the last payments are shown in order to get a review.
-
-

@@ -9,7 +9,7 @@ The App uses the web3-API [ethers.js](https://docs.ethers.io/). This API provide
 
 ## Download/Install
 
-At the moment the prototype is in development. After launch to production you can download the app from the appropriate app stores.
+At the moment the prototype is in development. After launch to production you can download the app from the app stores.
 If you are intereseted, please don't hesitate to download the code by typing following command in your command line:
 
 `git clone https://github.com/dedurak/Airline_Oracle`
@@ -38,7 +38,7 @@ There are many cases where passengers were rebooked to another flight because of
 ### Update Flight Status
 
 The user has the options to search for all planned flights by entering the date. After all flights are found, the details will be displayed on a the following screen. 
-To change the state of a flight, the user first presses on the details box to get displayed the state dialog, where the new state can be selected from a dropdown menu. 
+To change the state of a flight, the user first presses on the corresponding box to get displayed the state dialog, where the new state can be selected from a dropdown menu. 
 If the airline is used to cancel the flight, the app will get the passengerlist from the smart contract and starts to refund all booking payments to the passengers. If the user selects the state "ARR_DELAYED", the dialog will show another field where the minutes of the delay needs to be inserted (if it's empty, update will be blocked). 
 
 Before a passenger can check-in for a flight, the airline should consider that the state is changed to "CHECKIN". Otherwise the check-in is not possible.

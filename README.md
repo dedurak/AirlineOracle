@@ -1,7 +1,7 @@
 # AirlineOracle
 
 The AirlineOracle is a mobile application, usable on both established mobile operating systems - Android and iOS.
-The App contains and delivers a first approach, how an airline can store new flights inside its flightplan, create new inventories and can update the state of a flight. 
+The App contains and delivers a first approach, how an airline can store new flights inside its flightplan, create new inventories and update the state of a flight. 
 The detailed flight data is stored as a JSON data structure on the [IPFS](https://ipfs.io/). Only the Content identifier (CID) and all relevant data for queries are stored on the smart contract.
 The App uses the web3-API [ethers.js](https://docs.ethers.io/). This API provides a library to build Wallets and interact with the blockchain and the underlying smart contracts.
 

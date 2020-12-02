@@ -26,6 +26,17 @@ There are many cases where passengers were rebooked to another flight because of
 
 ## Update Flight Status
 
--- TODO --
+The user has the options to search for all planned flights by entering the date. After all flights are found, the details will be displayed on a the following screen. 
+To change the state of a flight, the user first presses on the appropriate box to get displayed the state dialog, where the new state can be selected from a dropdown menu. 
+If the airline is used to cancel the flight, the app gets the passengerlist from the smart contract and starts to refund all booking payments to the passengers. If the user selects the state "ARR_DELAYED", the dialog shows another field where the minutes of the delay needs to be inserted (if it's empty, update is blocked). 
+
+Before a passenger can check-in for a flight, the airline should consider that the state is changed to "CHECKIN". Otherwise the check-in is not possible.
+
+This app aims to demonstrate and visualize the fundamental steps of a new revolutionary process how refundings, following on a flight cancellation, or compensation payments, according to the european fligth passenger regulations (EU 261/2004), can be fully automatized without any necessary execution from employee-side.
+
+
+## Token Portal
+
+This portal shows the current balance of FLY-Tokens. There is also a table where all details to the last payments are shown in order to get a review.
 
 

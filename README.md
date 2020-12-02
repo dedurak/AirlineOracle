@@ -32,7 +32,7 @@ The airline defines on which weekdays the flight will be operated and can set th
 ### Create new Inventory
 
 First of all the airline searches for the flight for which the inventory shall be created. The necessary data for the inventory is the aircraft type, the registration of it and how many seats are available. This information is important to ensure that no overbooking of a planned flight can happen. 
-There are many cases where passengers were rebooked to another flight because of overbooking. Now this case is eliminated and not more possible.
+There are many cases where passengers were rebooked to another flight because of overbooking. Now this case is eliminated and not possible anymore.
 
 
 ### Update Flight Status

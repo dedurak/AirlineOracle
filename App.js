@@ -19,19 +19,12 @@ import Dialog, { DialogButton, DialogContent, DialogFooter } from 'react-native-
 import { Contracts } from './utils/walletUtils';
 
 
-/** 
- * @param mBackend has all flight relevant data to submit
- * @param _walletUtils WalletUtils contents wallet data for interaction with blockchain
- * @param _styles custom styles
- * @param projectID Infura Project ID
- * @param provider infura node required for communication with the blockchain
- * @param contracts smart contract instances
- * @param WalletMethods access to wallet functions
- * @param tokens represents the amount of the tokens the airline has
- * @param flyTokenContract FlyToken smart contract instance
- * @param flightPlanContract OperationsPlan smart contract instance
- * @param signer Wallet to sign and do transactions
-*/
+/**
+ * 
+ * @author Deniz Durak
+ * @description this application is only a prototype // No tests or audits have been processed
+ */
+
 const mBackend = new Backend();
 const _walletUtils = new WalletUtiils();
 const _styles = new MyStyles();
@@ -39,14 +32,15 @@ const projectID = "0211650106d841af86d75c8707e6e87b";
 const provider = new ethers.providers.InfuraProvider("rinkeby", projectID);
 const contracts = new MyContracts();
 const funcContracts = new Contracts();
-const fStatus = flightStatus;
 var dataListToShow = [];
-var tokens = 0;
+var dataToDisplayAsList = [];
 var _walletMethods;
 var signer;
+var flightStatusSelected = "";
+var delayMinutes = "";
 var pickedAirports = {
-  pickedDep: '',
-  pickedArr: ''
+  pickedDep: 'ADB',
+  pickedArr: 'ADB'
 }
 
 
@@ -56,11 +50,6 @@ const SearchingGif = () => {
   )
 }
 
-const hexToDec = (hex) => {
-  var result = parseInt(hex, 16);
-  console.log("Result token, ", result);
-  return result;
-}
 
 
 const DepPicker = () => {
@@ -75,8 +64,7 @@ const DepPicker = () => {
         pickedAirports.pickedDep=itemVal;
         setAirp(itemVal);
         console.log("Dep Airport: ", pickedAirports.pickedDep)}}
-      mode="dropdown"
-      >
+      mode="dropdown">
       <Picker.Item label="Frankfurt am Main" value="FRA" />
       <Picker.Item label="Izmir" value="ADB" />
       <Picker.Item label="Zurich" value="ZRH" />
@@ -105,6 +93,37 @@ const ArrPicker = () => {
       <Picker.Item label="Stuttgart" value="STR" />
       <Picker.Item label="Munich" value="MUC" />
     </Picker>
+    </View>
+  )
+}
+
+const FlightStatusPicker = () => {
+  const [ status, setStatus ] = useState("PLANNED");
+
+  return (
+    <View>
+      <Picker
+        selectedValue={status}
+        style={{height:40, width: 300}}
+        onValueChange={(itemVal, itemInd) => {
+          console.log("new status: ", itemVal);
+          flightStatusSelected = itemVal;
+          setStatus(itemVal);}}
+        mode="dropdown">
+        <Picker.Item label="PLANNED" value="0" />
+        <Picker.Item label="CANCELLED" value="1" />
+        <Picker.Item label="CHECKIN" value="2" />
+        <Picker.Item label="BOARDING" value="3" />
+        <Picker.Item label="DEP_ON_TIME" value="4" />
+        <Picker.Item label="ARR_ON_TIME" value="5" />
+        <Picker.Item label="DEP_DELAYED" value="6" />
+        <Picker.Item label="ARR_DELAYED" value="7" />
+      </Picker>
+      {flightStatusSelected=="7"?
+      <View>
+        <Text>Enter minutes of delay: </Text>
+        <TextInput style={_styles.styles.textInputBox} onChangeText={(val) => {delayMinutes=val}}/>
+      </View>:null}
     </View>
   )
 }
@@ -154,14 +173,66 @@ const StartScreen = ({ navigation }) => {
       contracts.getInventoryAbi(),
       signer));
 
-    funcContracts.getFlightToken().balanceOf(address).then(res => {tokens = parseInt(Object.values(res)[0], 16)})
-    //funcContracts.getPssInstance().on("TicketCancelled", (res) => {console.log("A ticket is cancelled: ", res)}); // if a ticket is cancelled auto transfer the payment to the address
+    funcContracts.getPssInstance().on("TicketCancelled", (addr, price) => {
+      console.log("A ticket is cancelled: ", addr); 
+      TicketCancelledEventOccures(addr, parseInt(Object.values(price[0]), 16) );
+    }); // if a ticket is cancelled auto transfer the payment to the address
 
     setWalletDialog(false);
     setShow(false);
 
   }
 
+  // get the payments from the contract
+  const getPayments = () => {
+    dataToDisplayAsList = [];
+    funcContracts.getFlightToken().searchPayments(10)
+      .then(res => { console.log("getPayments: ", res); handlePayments(res); })
+  }
+
+  // assign the values to display @return()
+  const handlePayments = (res) => {
+
+    // assign res values from blockchain, represent the payments
+    const resAmount = res[0].split("_");
+    const resSender = res[1];
+    const resRecipient = res[2];
+    const resTimestamp = res[3].split("_");
+ 
+    // know how many times to iterate
+    const len = resAmount.length;
+ 
+    for(var ind = 0; ind<len; ind++) {
+      var date = new Date(parseInt(resTimestamp[ind]));
+      var bufDate = date.getDate() + "." +
+                    date.getMonth() + "." +
+                    date.getUTCFullYear() + " " +
+                    date.getHours() + ":" +
+                    date.getMinutes();
+      
+      if(_walletUtils.getAddress() == resSender[ind]) {
+        var buf = {
+          id: ind.toString(),
+          amount: (0-(parseInt(resAmount[ind]))).toString(),
+          address: resRecipient[ind],
+          timeDate: bufDate
+        }
+        dataToDisplayAsList.push(buf);
+      }
+      else {
+        var buf = {
+          id: ind.toString(),
+          amount: (0+parseInt(resAmount[ind])).toString(),
+          address: resSender[ind],
+          timeDate: bufDate
+        }
+        dataToDisplayAsList.push(buf);
+      }
+    }
+    console.log("datalist: ", dataToDisplayAsList);
+    navigation.navigate('Token Portal');
+  }
+    
 
   return (
     <ScrollView style={{backgroundColor: "white"}}>
@@ -217,7 +288,7 @@ const StartScreen = ({ navigation }) => {
         </TouchableOpacity>:null}
         
         {!show?<TouchableOpacity style={{width: 300, height:50, backgroundColor: '#000F64', margin: 5}}
-                          onPress={() => navigation.navigate('Token Portal')}
+                          onPress={() => getPayments()}
                           disabled={ _walletUtils.getAddress() === "" }>
 
             <Text style={{color:"#fff", fontSize: 20, textAlign: "center", margin: 10}}>FLY Token Portal</Text>
@@ -227,9 +298,15 @@ const StartScreen = ({ navigation }) => {
   );
 }
 
-
-const TicketCancelledEventOccures = () => {
-
+// this component is called if the passenger cancels a ticket just for experimental usage
+// in production it should consider the general terms and conditions
+const TicketCancelledEventOccures = (addr, price) => {
+  funcContracts.getFlightToken().transfer(addr, price)
+    .then(res => {
+      var timestamp = Date.now().toString();
+      funcContracts.getFlightToken().insertPayment(price.toString(), addr, timestamp)
+        .then(res => console.log("Ticket refunded because of cancellation"));
+    })
 }
 
 
@@ -303,14 +380,6 @@ const AddFlightScreen = () => {
     } else { setAddingFlightDialog(false); setDialogText("No Days selected!"); setAddDialog(true); }
   }
 
-/**
- * 
- * <TextInput style={_styles.styles.textInputBox} 
-                  onChangeText={ (value) => { mBackend.setDep(value) }}/>
-
-                  <TextInput style={_styles.styles.textInputBox} 
-                  onChangeText={ (value) => { mBackend.setArr(value) }}/>
- */
 
   return (
     <ScrollView>
@@ -645,24 +714,20 @@ const FlightResultsScreen = ({ navigation }) => {
 
 // look for balances
 const TokenPortalScreen = () => {
-
-  var dataToDisplayAsList = [];
   const [ claimDialog, setClaimDialog ] = useState(false);
+  const [ tokens, setTokens ] = useState(0);
 
   // each item is displayed in flatlist with this view
-  const itemView = () => {
-    <View>
-      <Text>{dataToDisplayAsList.address}</Text>
-      <Text>{dataToDisplayAsList.amount}</Text>
-      <Text>{dataToDisplayAsList.timeDate}</Text>
-    </View>
+  const itemView = ({item}) => {
+    return (
+      <View style={{borderColor: "blue", borderWidth: 1, flex: 1, flexDirection: "column", margin: 5}}>
+        <Text>{item.address}</Text>
+        <Text>{item.amount}</Text>
+        <Text>{item.timeDate}</Text>
+      </View>
+    )
   }
 
-  // get the payments from the contract
-  const getPayments = () => {
-    funcContracts.getFlightToken().searchPayments()
-      .then(res => { console.log("getPayments: ", res); handlePayments(res); })
-  }
 
   console.log("Token Address: ", _walletUtils.getAddress());
 
@@ -674,66 +739,20 @@ const TokenPortalScreen = () => {
   }
 
   setTimeout(() => {funcContracts.getFlightToken().balanceOf(_walletUtils.getAddress())
-    .then(res => { console.log(Object.values(res)[0]); tokens = parseInt(Object.values(res)[0], 16); })}, 1000);
+    .then(res => { console.log(Object.values(res)[0]); setTokens(parseInt(Object.values(res)[0], 16)); })}, 1000);
 
-  getPayments();
 
   // get total amount of tokens
   const getTotalSupply = () => {
     funcContracts.getFlightToken().balanceOf(_walletUtils.getAddress())
-      .then(res => {tokens = res})
+      .then(res => {setTokens(parseInt(Object.values(res)[0]), 16)});
   }
 
-  // assign the values to display @return()
-  const handlePayments = (res) => {
-
-    // assign res values from blockchain, represent the payments
-    const resAmount = res[0];
-    const resSender = res[1];
-    const resRecipient = res[2];
-    const resTimestamp = res[3];
- 
-    // know how many times to iterate
-    const len = resAmount.length;
- 
-    for(var ind = 0; ind<len; ind++) {
-      var date = new Date(resTimestamp[ind]);
-      var bufDate = date.getDate() + "." +
-                    date.getMonth() + "." +
-                    date.getUTCFullYear() + " " +
-                    date.getHours() + ":" +
-                    date.getMinutes();
-      
-      if(walletAddress == resSender[ind]) {
-        var buf = {
-          id: ind,
-          amount: (0-resAmount[ind]),
-          address: resRecipient[ind],
-          timeDate: bufDate
-        }
-        dataToDisplayAsList.push(buf);
-      }
-      else if(walletAddress == resRecipient[ind]) {
-        var buf = {
-          id: ind,
-          amount: (0+resAmount[ind]),
-          address: resSender[ind],
-          timeDate: bufDate
-        }
-        dataToDisplayAsList.push(buf);
-      }
-    }
-    
-    console.log("resAmount: ", resAmount);
-    console.log("resSender: ", resSender);
-    console.log("resRecipient: ", resRecipient);
-    console.log("resTimestamp: ", resTimestamp);
-  }
 
   return(
       <ScrollView>
-          <View style={_styles.styles.containerFlightScreen}>
-              <Text style={{ fontSize: 16, color: "blue"}}>Balance: {tokens} FLY</Text>
+        <View style={_styles.styles.containerFlightScreen}>
+          <Text style={{ fontSize: 16, color: "blue"}}>Balance: {tokens} FLY</Text>
               <SafeAreaView style={{width: 400, height: 400}}>
                 <FlatList
                   data={dataToDisplayAsList}
@@ -746,16 +765,16 @@ const TokenPortalScreen = () => {
                 onPress={() => {
                     claimTokens();
                   }}>
-                <Text style={{fontSize: 14}}>Buy Tokens</Text>
+                <Text style={{color: "white", fontSize: 14, marginTop: 20}}>Buy Tokens</Text>
               </TouchableOpacity>
 
           <Dialog visible={claimDialog}>
+            <DialogContent>
+              <Text>Token bought!</Text>
+            </DialogContent>
             <DialogFooter>
               <DialogButton text="OK" onPress={() => {setClaimDialog(false)}} />
             </DialogFooter>
-            <DialogContent>
-              <Text>Inventory created!</Text>
-            </DialogContent>
           </Dialog>
 
           </View> 
@@ -848,7 +867,16 @@ const UpdateFlightScreen = ({ navigation }) => {
   // get the flightstatus from pss contract 
   const getFlightStatus = (flightNumber, month, day) => {
     funcContracts.getPssInstance().getFlightStatus(flightNumber, month, day)
-      .then(res => {console.log("state: ", res); flightStatus.push(res); ++i; iterateThroughFlights()});
+      .then(res => {
+        console.log("state: ", res); 
+        if(res == "") {
+          flightStatus.push(0);
+        }
+        else {
+          flightStatus.push(parseInt(res));
+        } 
+        ++i; 
+        iterateThroughFlights()});
   }
 
 
@@ -907,15 +935,194 @@ const UpdateFlightScreen = ({ navigation }) => {
   )
 }
 
-
+///////////////////////////////////////////////////////
+// THIS SCREEN IS THE CODED HEART OF THE NEW PROCESS //
+///////////////////////////////////////////////////////
 const showFlightsToUpdate = () => {
 
   var mapArray = [];
+  var pList = [];
+  var pStatus = [];
+  var ticketPrice = [];
+  var j = 0;
+  var i = 0;
+  var selectedFlight = 0;
+  const [ statusChanged, setStatusChanged] = useState("Processing...");
+  const [ statusDialog, setStatusDialog] = useState(false);
+  const [ updatedDialog, setUpdatedDialog] = useState(false);
+  const [ done, setDone ] = useState(false);
+  var listener = funcContracts.getPssInstance();
+  listener.on("FlightStatusChanged", (flightNumber, month, day, status) => {listeningOnEvent(flightNumber, month, day, status)});
 
   for(var i=0; i<dataListToShow.length; i++) {
     mapArray.push(i);
   }
 
+  const setNewStatus = async () => {
+    i = 0;
+    j = 0;
+
+    // change flight status
+    await funcContracts.getPssInstance().changeFlightStatus(
+      dataListToShow[selectedFlight].flightNumber, 
+      dataListToShow[selectedFlight].month,
+      dataListToShow[selectedFlight].day,
+      flightStatusSelected).then(res => {
+        console.log("FlightStatus change result: ", res);
+      });
+  }
+
+
+  const listeningOnEvent = (flightNumber, month, day, status) => {
+
+    var _month = parseInt(Object.values(month)[0], 16);
+    var _day = parseInt(Object.values(day)[0], 16);
+    var _status = parseInt(Object.values(status)[0], 16);
+
+    console.log("Flightnumber: ", flightNumber);
+    console.log("Date: ", _day, ".", _month);
+    console.log("Status: ", _status);
+
+    if(_status == 1 || (_status == 7 && delayMinutes>=180)) {
+      getPassengerList(flightNumber, _month, _day, _status);
+    }
+    else {
+      setUpdatedDialog(false);
+    }
+  }
+
+  // get the passengerlist to do the transactions
+  const getPassengerList = async (flightNo, mot, dy, stat) => {
+    pList=[];
+    pStatus=[];
+
+    console.log("inside getPassengerlist");
+
+    await funcContracts.getPssInstance().getPassengerList(
+      flightNo, 
+      mot,
+      dy)
+      .then(res => {
+        console.log("Passengerlist: ", res);
+        pList = res;
+        handleChargeback(flightNo, mot, dy, stat);
+      })
+  }
+
+
+  // handles the refunds
+  const handleChargeback = (flightNo, mot, dy, stat) => {
+
+    console.log("inside handlechargeback");
+
+    // fligth is cancelled
+    if(stat == 1) {
+      if(i<pList.length) {
+        getPStatus(flightNo, mot, dy, stat);
+      }
+      else {
+        doPayments();
+      }
+    }
+    // if flight has a delay more than 3 hours 
+    else if (stat == 7) {
+      if(i<pList.length) {
+        getPStatus(flightNo, mot, dy, stat);
+      } else {
+        payEqualization();
+      }
+    }
+  }
+
+  // this is necessary to check that the passenger status is not cancelled
+  const getPStatus = async (flightNo, mot, dy, stat) => {
+    await funcContracts.getPssInstance().getPassengerStatus(pList[i], 
+      flightNo, 
+      mot,
+      dy)
+      .then(res => {
+        pStatus.push(parseInt(res));
+        if(stat == 1) {
+          getTicketPrice(flightNo, mot, dy, stat);
+        } else {
+          ++i;
+          handleChargeback(flightNo, mot, dy, stat);
+        }
+      })
+  }
+
+  // get the ticket price - necessary if flight is cancelled
+  const getTicketPrice = async (flightNo, mot, dy, stat) => {
+    await funcContracts.getPssInstance().getTicketPrice(pList[i], 
+      flightNo, 
+      mot,
+      dy)
+      .then(res => {
+        ticketPrice.push(parseInt(Object.values(res)[0], 16));
+        ++i;
+        handleChargeback(flightNo, mot, dy, stat);
+      })
+  }
+
+  // next iteration - flight cancelled
+  const doPayments = () => {
+    if(j<pList.length) {
+      sendMoney();
+    } else {
+      setUpdatedDialog(false);
+    }
+  }
+
+  // call paymenthandlercancelled
+  const sendMoney = async () => {
+    if(pStatus[j] != 5) {
+      await funcContracts.getFlightToken().paymentHandlerCancelled(pList[j], ticketPrice[j])
+        .then(res => {
+          console.log("Payment ", j, " done");
+          insertPayments(ticketPrice[j], 2);
+        });
+    } else {
+      ++j;
+      doPayments();
+    }
+  }
+
+  // pay equalization payment
+  const payEqualization = () => {
+    if(j<pList.length) {
+      sendEqualization();
+    } else {
+      setUpdatedDialog(false);
+    }
+  }
+
+  // call paymenthandlerdelayed
+  const sendEqualization = async () => {
+    if(pStatus[j] != 5) {
+      await funcContracts.getFlightToken().paymentHandlerDelayed(pList[j], 1200)
+        .then(res => {
+          console.log("Payment ", j, " refunded");
+          insertPayments(250, 1);
+        });
+    } else {
+      ++j;
+      payEqualization();
+    }
+  }
+
+  // insertpayment to show later in token portal
+  const insertPayments = async (amount, iterator) => {
+    var timestamp = Date.now().toString();
+    await funcContracts.getFlightToken().insertPayment(amount.toString(), pList[j], timestamp)
+      .then(res => {
+        ++j;
+        if(iterator == 1) {
+          payEqualization();
+        } else if(iterator == 2) {
+          doPayments();
+        }
+      })
+  }
 
   return(
     <ScrollView>
@@ -924,21 +1131,60 @@ const showFlightsToUpdate = () => {
           <Text style={{color: "blue", fontWeight: "bold"}}>Flights Table</Text>
         </View>
       {mapArray.map(arr => (
-        <TouchableOpacity key={arr} style={{ maxHeight:80, width: 350 , flex: 1, flexDirection: "row", 
-                                 borderColor: "blue", borderWidth: 1, borderRadius: 2}}>
-                                   
-          <Text style={{ margin: 10, textAlign: "center"}}>{ dataListToShow[arr].flightNumber } </Text>
-          <View style={{flex: 1, flexDirection: "column"}}>
+        <TouchableOpacity key={arr} style={{ maxHeight:80, width: 400 , flex: 1, flexDirection: "row", 
+                                 borderColor: "blue", borderWidth: 1, borderRadius: 2, marginTop: 5}}
+                                 onPress={() => {
+                                   console.log("arr: ", arr);
+                                  selectedFlight = arr;
+                                  console.log("selectedFlight: ", selectedFlight);
+                                  setStatusDialog(true);
+                                 }}>
+          <View style={{flex: 1, flexDirection: "column", maxWidth: 190}}>                  
+            <Text style={{ marginTop: 10, marginBottom: 5, textAlign: "center"}}>{ dataListToShow[arr].flightNumber } </Text>
+            <View style={{flex: 1, flexDirection: "row", marginLeft: 10}}>
+              <Text style={{ textAlign: "center"}}>STATUS: </Text>
+              <Text style={{ color: "blue", fontWeight: "bold"}}>{ flightStatus[dataListToShow[arr].status]}</Text>
+            </View>
+          </View>
+          <View style={{flex: 1, flexDirection: "column", maxWidth: 80, marginLeft: 10}}>
             <Text style={{ marginTop: 10, marginBottom:5, textAlign: "center"}}>{ dataListToShow[arr].departure }  </Text>
-            <Text style={{ marginTop: 5, marginBottom: 10, textAlign: "center"}}>{ dataListToShow[arr].depTime }  </Text>  
+            <Text style={{ marginBottom: 10, textAlign: "center"}}>DEP: { dataListToShow[arr].depTime }  </Text>  
           </View>
           <Text style={{ margin: 20, textAlign: "center"}}> {"-->"}  </Text>
-          <View style={{flex: 1, flexDirection: "column"}}>
+          <View style={{flex: 1, flexDirection: "column", maxWidth: 80, marginLeft: 10}}>
             <Text style={{ marginTop: 10, marginBottom:5, textAlign: "center"}}>{ dataListToShow[arr].arrival }  </Text>
-            <Text style={{ marginTop: 5, marginBottom: 10, textAlign: "center"}}>{ dataListToShow[arr].arrTime }  </Text>  
+            <Text style={{ marginBottom: 10, textAlign: "center"}}>ARR: { dataListToShow[arr].arrTime }  </Text>  
           </View>
           
         </TouchableOpacity>))}
+
+        <Dialog visible={updatedDialog}>
+          <DialogContent>
+            <Text>{statusChanged}</Text>
+          </DialogContent>
+          {done?<DialogFooter>
+            <DialogButton text="Checked" onPress={() => {
+              setStatusChanged("Processing...");
+              setUpdatedDialog(false)}}/>
+          </DialogFooter>:null}
+        </Dialog>
+
+        <Dialog visible={statusDialog}>
+          <DialogContent>
+            <Text>Select new Status: </Text>
+            <FlightStatusPicker />
+          </DialogContent>
+          <DialogFooter>
+            <DialogButton text="cancel" onPress={() => setStatusDialog(false)}/>
+            <DialogButton text="Update Status"
+              onPress={() => {
+                setStatusDialog(false);
+                setUpdatedDialog(true);
+                setTimeout(() => setNewStatus(), 500);
+              }}/>
+          </DialogFooter>
+        </Dialog>
+
       </View>
     </ScrollView>
   )

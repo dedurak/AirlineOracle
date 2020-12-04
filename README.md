@@ -31,7 +31,7 @@ The following image shows what happens after the "Create Flight" Button is press
 
 ![Use Case Insert new flight to flightplan](/assets/UseCases/CreateNewFlight.png)
 
-First the AirlineOracle stores the data inside the IPFS. After receiving the "Content Identifier" (CID) the data is send to the smart Contract OperationsPlan to store it, together with departure and arrival origin.
+First the AirlineOracle stores the data inside the IPFS. After receiving the CID the data is send to the smart Contract OperationsPlan to store it, together with departure and arrival origin.
 
 
 ### Create new Inventory

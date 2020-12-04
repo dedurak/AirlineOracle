@@ -25,8 +25,8 @@ export class MyContracts {
         "function _burnFrom(address account, uint256 amount)",
         "function paymentHandlerCancelled(address cust, uint price)",
         "function paymentHandlerDelayed(address cust, uint dist)",
-        "function insertPayment(uint _amount, address addr, uint timestamp)",
-        "function searchPayment() public view returns(uint[] memory, address[] memory, address[] memory, uint[] memory)",
+        "function insertPayment(string _amount, address addr, string timestamp)",
+        "function searchPayments(uint length) public view returns(string memory, address[] memory, address[] memory, string memory)",
 
         // events
         "event PaymentRefunded(address from, address to, uint amount)",
@@ -49,15 +49,16 @@ export class MyContracts {
         "event InventoryCreated(string flightNumber, uint month, uint day)"
     ];
 
-    pss_ADDR = "0x1eB5DB592dD279aAe9276Cd4d0156b166caB9B5E";
+    pss_ADDR = "0x6b130A3a87973Da21DE3E9f0fc14fD983A26Cbad";
     pss_ABI = [
         "function createTicket(string memory cid, string memory flightNumber, uint month, uint day, uint256 price) public returns(bool)",
         "function changeFlightStatus(string memory flightNumber, uint month, uint day, uint _status) public returns(bool, uint)",
         "function getFlightStatus(string memory flightNumber, uint month, uint day) public view returns(string) ",
-        "function getPassengerStatus(string memory flightNumber, uint month, uint day) public view returns(string) ",
+        "function getPassengerStatus(address addr, string memory flightNumber, uint month, uint day) public view returns(string) ",
         "function getPassengerList(string memory flightNumber, uint month, uint day) public view returns(address[] memory)",
         "function getTickets() public view returns(string)",
         "function changePassengerStatus(uint _status, string memory flightNumber, uint month, uint day) public returns(bool) ",
+        "function getTicketPrice(address addr, string memory flightNumber, uint month, uint day) public view returns(uint)",
         "function compareStrings (string memory cmp1, string memory cmp2) private pure returns(bool)",
         "function concatStrings(string[] memory cids)",
 

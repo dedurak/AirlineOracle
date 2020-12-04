@@ -27,6 +27,11 @@ Login is possible with the individual BIP39 Mnemonic.
 
 To create a new Flight the user needs to fill out the form and sends the data to the contract ["OperationsPlan"](https://github.com/dedurak/smartcontracts/blob/main/smart_contracts/contracts/OperationPlan.sol) by pressing on "Create Flight". 
 The airline defines on which weekdays the flight will be operated and can set the ticketprice for each operating day.
+The following image shows what happens after the "Create Flight" Button is pressed:
+
+![Use Case Insert new flight to flightplan](/assets/UseCases/CreateNewFlight.png)
+
+First the AirlineOracle stores the data inside the IPFS. After receiving the "Content Identifier" (CID) the data is send to the smart Contract OperationsPlan to store it, together with departure and arrival origin.
 
 
 ### Create new Inventory
